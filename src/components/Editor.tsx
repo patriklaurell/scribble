@@ -57,9 +57,9 @@ export default function Editor({ onHeadingsUpdate }: EditorProps) {
   };
 
   return (
-    <div className="flex-1 h-screen overflow-auto bg-white">
-      <div className="max-w-5xl mx-auto px-4 py-8">
-        <div className="mb-8 flex items-center justify-between">
+    <div className="flex-1 h-screen overflow-hidden bg-white">
+      <div className="h-full flex flex-col max-w-5xl mx-auto px-4 py-8">
+        <div className="flex items-center justify-between mb-8">
           <input
             type="text"
             value={filename}
@@ -89,7 +89,7 @@ export default function Editor({ onHeadingsUpdate }: EditorProps) {
           />
         </div>
 
-        <div className="prose prose-lg max-w-none">
+        <div className="prose prose-lg max-w-none flex-1 overflow-auto">
           {isPreview ? (
             <Preview
               previewable={essay}
@@ -105,12 +105,14 @@ export default function Editor({ onHeadingsUpdate }: EditorProps) {
               onChange={handleContentChange}
               onBlur={() => setIsPreview(true)}
               placeholder="Start writing..."
-              className="w-full h-[calc(100vh-250px)] font-mono text-lg p-4 border rounded-lg resize-none focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full h-full font-mono text-lg p-4 border rounded-lg resize-none focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
           )}
         </div>
 
-        <WordCount text={content} />
+        <div className="mt-4">
+          <WordCount text={content} />
+        </div>
       </div>
     </div>
   );
