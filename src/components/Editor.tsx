@@ -1,12 +1,13 @@
 import { useState, useRef, useEffect } from "react";
-import MDEditor from "@uiw/react-md-editor";
+import { useEssayStore } from "../store/essay";
 import WordCount from "./WordCount";
+import Preview from "./Preview";
 
 interface HeadingInfo {
   id: string;
   level: number;
   title: string;
-  content?: string;
+  lineNumber: number;
 }
 
 interface EditorProps {
@@ -14,36 +15,26 @@ interface EditorProps {
 }
 
 export default function Editor({ onHeadingsUpdate }: EditorProps) {
-  const [content, setContent] = useState("");
-  const [fileName, setFileName] = useState("Untitled");
-  const [headings, setHeadings] = useState<HeadingInfo[]>([]);
+  const { essay, loadMarkdown, getMarkdown } = useEssayStore();
+  const [content, setContent] = useState(getMarkdown());
+  const [isPreview, setIsPreview] = useState(true);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const parseMarkdown = (text: string) => {
-    const headingRegex = /^(#{1,6})\s+(.+)$/gm;
-    const matches = Array.from(text.matchAll(headingRegex));
-
-    const headings: HeadingInfo[] = matches.map((match, index) => ({
-      id: index.toString(),
-      level: match[1].length,
-      title: match[2],
+  // Update headings when essay changes
+  useEffect(() => {
+    const headings = essay.sections.map((section, index) => ({
+      id: section.id,
+      level: section.header.headerLevel! - 1,
+      title: section.header.text,
+      lineNumber: index,
     }));
+    onHeadingsUpdate(headings);
+  }, [essay, onHeadingsUpdate]);
 
-    // Set the document title from the first h1 if it exists
-    const firstH1 = headings.find((h) => h.level === 1);
-    if (firstH1) {
-      setFileName(firstH1.title);
-    }
-
-    return headings;
-  };
-
-  const handleContentChange = (value?: string) => {
-    if (value === undefined) return;
-    setContent(value);
-    const newHeadings = parseMarkdown(value);
-    setHeadings(newHeadings);
-    onHeadingsUpdate(newHeadings);
+  const handleContentChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    const newContent = e.target.value;
+    setContent(newContent);
+    loadMarkdown(newContent);
   };
 
   const handleFileSelect = async (
@@ -54,46 +45,38 @@ export default function Editor({ onHeadingsUpdate }: EditorProps) {
 
     try {
       const text = await file.text();
-      setContent(text);
-      const newHeadings = parseMarkdown(text);
-      setHeadings(newHeadings);
-      onHeadingsUpdate(newHeadings);
-      setFileName(file.name.replace(/\.md$/, ""));
+      loadMarkdown(text);
+      setContent(getMarkdown());
     } catch (error) {
       console.error("Error reading file:", error);
       alert("Error reading file. Please try again.");
     }
   };
 
-  const handleOpenClick = () => {
-    fileInputRef.current?.click();
-  };
-
-  // Update parent component with headings for outline
-  useEffect(() => {
-    // You can emit these headings to the parent component or use a state management solution
-    console.log("Headings updated:", headings);
-  }, [headings]);
-
   return (
-    <div
-      className="flex-1 h-screen overflow-auto bg-white"
-      data-color-mode="light"
-    >
-      <div className="max-w-3xl mx-auto p-8">
+    <div className="flex-1 h-screen overflow-auto bg-white">
+      <div className="max-w-5xl mx-auto px-4 py-8">
         <div className="mb-8 flex items-center justify-between">
           <input
             type="text"
-            value={fileName}
-            onChange={(e) => setFileName(e.target.value)}
+            value={essay.title}
+            readOnly
             className="text-3xl font-mono focus:outline-none"
           />
-          <button
-            onClick={handleOpenClick}
-            className="px-4 py-2 bg-gray-100 hover:bg-gray-200 rounded-lg font-mono text-sm transition-colors"
-          >
-            Open File
-          </button>
+          <div className="flex items-center gap-4">
+            <button
+              onClick={() => setIsPreview(!isPreview)}
+              className="px-4 py-2 bg-gray-100 hover:bg-gray-200 rounded-lg font-mono text-sm transition-colors"
+            >
+              {isPreview ? "Edit" : "Preview"}
+            </button>
+            <button
+              onClick={() => fileInputRef.current?.click()}
+              className="px-4 py-2 bg-gray-100 hover:bg-gray-200 rounded-lg font-mono text-sm transition-colors"
+            >
+              Open File
+            </button>
+          </div>
           <input
             ref={fileInputRef}
             type="file"
@@ -104,13 +87,16 @@ export default function Editor({ onHeadingsUpdate }: EditorProps) {
         </div>
 
         <div className="prose prose-lg max-w-none">
-          <MDEditor
-            value={content}
-            onChange={handleContentChange}
-            preview="edit"
-            height={window.innerHeight - 250}
-            className="w-full"
-          />
+          {isPreview ? (
+            <Preview previewable={essay} />
+          ) : (
+            <textarea
+              value={content}
+              onChange={handleContentChange}
+              placeholder="Start writing..."
+              className="w-full h-[calc(100vh-250px)] font-mono text-lg p-4 border rounded-lg resize-none focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
+          )}
         </div>
 
         <WordCount text={content} />

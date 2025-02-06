@@ -6,8 +6,7 @@ interface HeadingInfo {
   id: string;
   level: number;
   title: string;
-  content?: string;
-  isExpanded?: boolean;
+  lineNumber: number;
 }
 
 export default function Index() {
@@ -18,7 +17,7 @@ export default function Index() {
   };
 
   const handleHeadingClick = (heading: HeadingInfo) => {
-    // TODO: Implement scrolling to heading
+    // TODO: Implement scrolling to section
     console.log("Clicked heading:", heading);
   };
 
