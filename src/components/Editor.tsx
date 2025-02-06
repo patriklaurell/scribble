@@ -18,6 +18,7 @@ export default function Editor({ onHeadingsUpdate }: EditorProps) {
   const { essay, loadMarkdown, getMarkdown } = useEssayStore();
   const [content, setContent] = useState(getMarkdown());
   const [isPreview, setIsPreview] = useState(true);
+  const [filename, setFilename] = useState("Untitled");
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Update headings when essay changes
@@ -47,6 +48,7 @@ export default function Editor({ onHeadingsUpdate }: EditorProps) {
       const text = await file.text();
       loadMarkdown(text);
       setContent(getMarkdown());
+      setFilename(file.name);
     } catch (error) {
       console.error("Error reading file:", error);
       alert("Error reading file. Please try again.");
@@ -59,7 +61,7 @@ export default function Editor({ onHeadingsUpdate }: EditorProps) {
         <div className="mb-8 flex items-center justify-between">
           <input
             type="text"
-            value={essay.title}
+            value={filename}
             readOnly
             className="text-3xl font-mono focus:outline-none"
           />
@@ -88,14 +90,14 @@ export default function Editor({ onHeadingsUpdate }: EditorProps) {
 
         <div className="prose prose-lg max-w-none">
           {isPreview ? (
-            <Preview previewable={essay} />
-          ) : (
             <textarea
               value={content}
               onChange={handleContentChange}
               placeholder="Start writing..."
               className="w-full h-[calc(100vh-250px)] font-mono text-lg p-4 border rounded-lg resize-none focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
+          ) : (
+            <Preview previewable={essay} />
           )}
         </div>
 
