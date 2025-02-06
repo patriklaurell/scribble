@@ -74,6 +74,20 @@ export default function Editor({ onHeadingsUpdate }: EditorProps) {
               {isPreview ? "Edit" : "Preview"}
             </button>
             <button
+              onClick={() => {
+                const blob = new Blob([content], { type: "text/markdown" });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement("a");
+                a.href = url;
+                a.download = filename;
+                a.click();
+                URL.revokeObjectURL(url);
+              }}
+              className="px-4 py-2 bg-gray-100 hover:bg-gray-200 rounded-lg font-mono text-sm transition-colors"
+            >
+              Save
+            </button>
+            <button
               onClick={() => fileInputRef.current?.click()}
               className="px-4 py-2 bg-gray-100 hover:bg-gray-200 rounded-lg font-mono text-sm transition-colors"
             >
